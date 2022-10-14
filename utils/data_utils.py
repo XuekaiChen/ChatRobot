@@ -6,8 +6,7 @@
 import os
 import re
 import unicodedata
-import pickle
-from utils.vocab import Vocab
+from solutions.utils.vocab import Vocab
 
 MAX_LENGTH = 10  # Maximum sentence length to consider
 
@@ -36,7 +35,8 @@ def read_pairs(datafile):
     # Read query/response pairs
     print("Reading lines...")
     # Read the file and split into lines
-    lines = open(datafile, encoding='utf-8').read().strip().split('\n')
+    lines = open(datafile, encoding='utf-8').\
+        read().strip().split('\n')
     # Split every line into pairs and normalize
     pairs = [[normalize_string(s) for s in l.split('\t')] for l in lines]
 
@@ -44,58 +44,62 @@ def read_pairs(datafile):
 
 
 def filter_pair(p):
-    """Returns True if both sentences in a pair 'p' are under the MAX_LENGTH threshold"""
+    """Returns True iff both sentences in a pair 'p' are under the MAX_LENGTH threshold"""
     # Input sequences need to preserve the last word for EOS token
     return len(p[0].split(' ')) < MAX_LENGTH and len(p[1].split(' ')) < MAX_LENGTH
 
 
 def filter_pairs(pairs):
     """filter_pairs
-    使用 filter_pair 函数来过滤掉短句子
+    使用 filter_pair 函数来
     """
     # Filter pairs using filter_pair condition
     return [pair for pair in pairs if filter_pair(pair)]
 
 
-def load_prepare_data(corpus_name, datafile, save_dir=""):
-    """Returns True if both sentences in a pair 'p' are under the MAX_LENGTH threshold
+def load_prepare_data(corpus_name, datafile, save_dir=None):
+    """Returns True iff both sentences in a pair 'p' are under the MAX_LENGTH threshold
     Args:
         corpus_name: 语料集名称，如："cornell movie-dialogs corpus"。
         datafile: 转换好的语料集文件的路径。
-        save_dir: 可选，默认为None，保存在硬盘中。
+        save_dir: 可选，默认为None，保存在硬盘的路径。
     Return:
         vocab: 单词词典。
         pairs: 读取的对话文本对。
     """
 
-    # 曾建立过词表和数据
-    if os.path.exists(save_dir):
-        with open(os.path.join(save_dir, "vocab.pkl"), "rb") as f_vocab:
-            vocab = pickle.load(f_vocab)
-        with open(os.path.join(save_dir, "pairs.pkl"), "rb") as f_pairs:
-            pairs = pickle.load(f_pairs)
-        print("已获取大小为{!s}的vocab,长度为{!s}的pairs".format(len(vocab.word2count), len(pairs)))
-        return vocab, pairs
+    import pickle
+    vocab_path = os.path.join(save_dir, "vocab.pkl")
+    pairs_path = os.path.join(save_dir, "pairs.pkl")
 
-    # 未建立过词表和数据
-    else:
-        print("开始准备 vocab， pairs 数据 ...")
-        vocab = Vocab(corpus_name)  # 创建一个空的 vocab 对象
-        pairs = read_pairs(datafile)
-        print("Read {!s} sentence pairs".format(len(pairs)))
-
-        pairs = filter_pairs(pairs)  # 过滤掉短句子
-        print("Trimmed to {!s} sentence pairs".format(len(pairs)))
-        print("Counting words...")
-        for pair in pairs:  # 向vocab中添加单词
-            vocab.add_sentence(pair[0])
-            vocab.add_sentence(pair[1])
-        print("Counted words:", vocab.num_words)
-        # 创建temp文件夹并存储vocab.pkl和pairs.pkl
-        os.mkdir("data\\cornell movie-dialogs corpus\\temp")
-        with open("data\\cornell movie-dialogs corpus\\temp\\vocab.pkl", 'wb') as f_vocab:
-            pickle.dump(vocab, f_vocab)
-        with open("data\\cornell movie-dialogs corpus\\temp\\pairs.pkl", 'wb') as f_pairs:
-            pickle.dump(pairs, f_pairs)
+    if os.path.isfile(vocab_path) and os.path.isfile(pairs_path):
+        print("恢复已经保存的 vocab， pairs 数据 ...")
+        with open(vocab_path, "rb") as f:
+            vocab = pickle.load(f, encoding="bytes")
+        with open(pairs_path, "rb") as f:
+            pairs = pickle.load(f, encoding="bytes")
 
         return vocab, pairs
+
+    print("开始准备 vocab， pairs 数据 ...")
+    vocab = Vocab(corpus_name)  # 创建一个 vocab 对象
+    pairs = read_pairs(datafile)
+    print("Read {!s} sentence pairs".format(len(pairs)))
+
+    pairs = filter_pairs(pairs)
+    print("Trimmed to {!s} sentence pairs".format(len(pairs)))
+    print("Counting words...")
+    for pair in pairs:
+        vocab.add_sentence(pair[0])
+        vocab.add_sentence(pair[1])
+    print("Counted words:", vocab.num_words)
+
+    print("Saving vocab to: {vocab_path}")
+    os.makedirs(save_dir, exist_ok=True)
+    with open(vocab_path, "wb") as f:
+        pickle.dump(vocab, f)
+    print("Saving pairs to: {pairs_path}")
+    with open(pairs_path, "wb") as f:
+        pickle.dump(pairs, f)
+
+    return vocab, pairs
