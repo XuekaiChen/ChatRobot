@@ -39,7 +39,7 @@ def train_model():
     datafile = os.path.join(corpus_path, "formatted_movie_lines.txt")
 
     # Load/Assemble vocab and pairs
-    save_dir = "data\\cornell movie-dialogs corpus\\temp"
+    save_dir = os.path.join("data", "cornell movie-dialogs corpus")
     vocab, pairs = load_prepare_data(corpus_name, datafile, save_dir)
 
     # Trim voc and pairs
@@ -162,7 +162,7 @@ def eval_model():
     datafile = os.path.join(corpus_path, "formatted_movie_lines.txt")
 
     # Load/Assemble vocab and pairs
-    save_dir = "data\\cornell movie-dialogs corpus\\temp"
+    save_dir = os.path.join("data", "cornell movie-dialogs corpus")
     vocab, pairs = load_prepare_data(corpus_name, datafile, save_dir)
 
     # Trim voc and pairs
