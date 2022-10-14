@@ -57,7 +57,7 @@ def filter_pairs(pairs):
     return [pair for pair in pairs if filter_pair(pair)]
 
 
-def load_prepare_data(corpus_name, datafile, save_dir=None):
+def load_prepare_data(corpus_name, datafile, save_dir=""):
     """Returns True if both sentences in a pair 'p' are under the MAX_LENGTH threshold
     Args:
         corpus_name: 语料集名称，如："cornell movie-dialogs corpus"。
@@ -68,17 +68,16 @@ def load_prepare_data(corpus_name, datafile, save_dir=None):
         pairs: 读取的对话文本对。
     """
 
-    ################################################################
-    # TODO 可选，这里的 load_prepare_data 运行一次所需时间较长，我们可以在这里写一段 save and restore 的代码，处理好的数据就存在硬盘里，直接读取，节省再次处理的时间，否则，就进行处理，然后保存
-    if save_dir:
-        with open("data\\cornell movie-dialogs corpus\\vocab.pkl", "rb") as f_vocab:
+    # 曾建立过词表和数据
+    if os.path.exists(save_dir):
+        with open(os.path.join(save_dir, "vocab.pkl"), "rb") as f_vocab:
             vocab = pickle.load(f_vocab)
-        with open("data\\cornell movie-dialogs corpus\\pairs.pkl", "rb") as f_pairs:
+        with open(os.path.join(save_dir, "pairs.pkl"), "rb") as f_pairs:
             pairs = pickle.load(f_pairs)
         print("已获取大小为{!s}的vocab,长度为{!s}的pairs".format(len(vocab.word2count), len(pairs)))
         return vocab, pairs
 
-    ################################################################
+    # 未建立过词表和数据
     else:
         print("开始准备 vocab， pairs 数据 ...")
         vocab = Vocab(corpus_name)  # 创建一个空的 vocab 对象
@@ -92,10 +91,11 @@ def load_prepare_data(corpus_name, datafile, save_dir=None):
             vocab.add_sentence(pair[0])
             vocab.add_sentence(pair[1])
         print("Counted words:", vocab.num_words)
-        # 存储vocab.pkl和pairs.pkl
-        with open("data/cornell movie-dialogs corpus/vocab.pkl", 'wb') as f_vocab:
+        # 创建temp文件夹并存储vocab.pkl和pairs.pkl
+        os.mkdir("data\\cornell movie-dialogs corpus\\temp")
+        with open("data\\cornell movie-dialogs corpus\\temp\\vocab.pkl", 'wb') as f_vocab:
             pickle.dump(vocab, f_vocab)
-        with open("data/cornell movie-dialogs corpus/pairs.pkl", 'wb') as f_pairs:
+        with open("data\\cornell movie-dialogs corpus\\temp\\pairs.pkl", 'wb') as f_pairs:
             pickle.dump(pairs, f_pairs)
 
         return vocab, pairs
